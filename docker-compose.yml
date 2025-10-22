@@ -5,13 +5,14 @@ services:
     image: postgres:16-alpine
     container_name: postgres_db
     restart: unless-stopped
-    user: "999:999"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-myapp}
       POSTGRES_USER: ${POSTGRES_USER:-admin}
+      # Use Docker secret for the password - the official image supports _FILE
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
       POSTGRES_HOST_SSL: "on"
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts:/docker-entrypoint-initdb.d:ro
@@ -34,7 +35,6 @@ services:
     image: redis:7-alpine
     container_name: redis_db
     restart: unless-stopped
-    user: "999:999"
     environment:
       REDIS_PASSWORD_FILE: /run/secrets/redis_password
     volumes:
@@ -61,13 +61,13 @@ services:
     image: qdrant/qdrant:latest
     container_name: qdrant_db
     restart: unless-stopped
-    user: "1000:2000"
     environment:
       QDRANT__SERVICE__API_KEY_FILE: /run/secrets/qdrant_api_key
       QDRANT__SERVICE__READ_ONLY_API_KEY_FILE: /run/secrets/qdrant_readonly_key
       QDRANT__SERVICE__ENABLE_TLS: "true"
       QDRANT__SERVICE__TLS__CERT: /tls/qdrant.crt
       QDRANT__SERVICE__TLS__KEY: /tls/qdrant.key
+      # Qdrant will manage storage inside the named volume; do not override runtime user
     volumes:
       - qdrant_storage:/qdrant/storage
       - qdrant_snapshots:/qdrant/snapshots
