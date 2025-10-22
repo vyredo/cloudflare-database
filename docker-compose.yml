@@ -65,13 +65,16 @@ services:
       QDRANT__SERVICE__API_KEY_FILE: /run/secrets/qdrant_api_key
       QDRANT__SERVICE__READ_ONLY_API_KEY_FILE: /run/secrets/qdrant_readonly_key
       QDRANT__SERVICE__ENABLE_TLS: "true"
-      QDRANT__SERVICE__TLS__CERT: /tls/qdrant.crt
-      QDRANT__SERVICE__TLS__KEY: /tls/qdrant.key
+      QDRANT__SERVICE__TLS__CERT: /tls/cert.pem
+      QDRANT__SERVICE__TLS__KEY: /tls/key.pem
+      QDRANT__SERVICE__TLS__CA: /tls/ca.crt
       # Qdrant will manage storage inside the named volume; do not override runtime user
     volumes:
       - qdrant_storage:/qdrant/storage
       - qdrant_snapshots:/qdrant/snapshots
-      - ./certs/qdrant:/tls:ro
+      - ./certs/qdrant/qdrant.crt:/tls/cert.pem:ro
+      - ./certs/qdrant/qdrant.key:/tls/key.pem:ro
+      - ./certs/qdrant/ca.crt:/tls/ca.crt:ro
     tmpfs:
       - /tmp
     secrets:
@@ -83,7 +86,7 @@ services:
       - "127.0.0.1:6333:6333"
       - "127.0.0.1:6334:6334"
     healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:6333/healthz || exit 1" ]
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider --ca-certificate /tls/ca.crt https://localhost:6333/healthz || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
