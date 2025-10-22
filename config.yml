@@ -3,7 +3,7 @@ credentials-file: /etc/cloudflared/credentials.json
 
 ingress:
     - hostname: qdrant.soundsgoodlab.sg
-      service: http://qdrant_db:6333
+      service: tcp://qdrant_db:6333
     - hostname: redis.soundsgoodlab.sg
       service: tcp://redis_db:6379
     - hostname: postgres.soundsgoodlab.sg
