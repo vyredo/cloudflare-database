@@ -77,11 +77,6 @@ services:
     ports:
       - "127.0.0.1:6333:6333"
       - "127.0.0.1:6334:6334"
-    healthcheck:
-      test: [ "CMD", "curl", "-k", "-f", "https://localhost:6333/healthz" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   cloudflared:
     build: .
