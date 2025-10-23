@@ -4,7 +4,7 @@ protocol: http2
 
 ingress:
     - hostname: qdrant.soundsgoodlab.sg
-      service: tcp://qdrant_db:6333
+      service: http://qdrant_db:6333
     - hostname: redis.soundsgoodlab.sg
       service: tcp://redis_db:6379
     - hostname: postgres.soundsgoodlab.sg
