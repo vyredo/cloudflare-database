@@ -1,5 +1,5 @@
 # cloudflare/Dockerfile
-FROM cloudflare/cloudflared:2025.8.1
+FROM cloudflare/cloudflared:2025.10.0
 
 # 2 Add your configuration (baked into the image)
 COPY config.yml /etc/cloudflared/config.yml

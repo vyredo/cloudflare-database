@@ -6,8 +6,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-myapp}
       POSTGRES_USER: ${POSTGRES_USER:-admin}
-      # Use Docker secret for the password - the official image supports _FILE
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
       POSTGRES_HOST_SSL: "on"
       PGDATA: /var/lib/postgresql/data/pgdata
@@ -15,8 +14,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts:/docker-entrypoint-initdb.d:ro
       - ./certs/postgres:/var/lib/postgresql/certs:ro
-    secrets:
-      - postgres_password
     networks:
       - db_network
     ports:
@@ -27,20 +24,18 @@ services:
       timeout: 5s
       retries: 5
     command: >
-      -c ssl=on -c ssl_cert_file=/var/lib/postgresql/certs/server.crt -c ssl_key_file=/var/lib/postgresql/certs/server.key -c ssl_ca_file=/var/lib/postgresql/certs/ca.crt -c max_connections=100 -c shared_buffers=256MB -c effective_cache_size=1GB
+      -c ssl=on  -c ssl_cert_file=/var/lib/postgresql/certs/server.crt  -c ssl_key_file=/var/lib/postgresql/certs/server.key  -c ssl_ca_file=/var/lib/postgresql/certs/ca.crt  -c max_connections=100  -c shared_buffers=256MB  -c effective_cache_size=1GB
 
   redis:
     image: redis:7-alpine
     container_name: redis_db
     restart: unless-stopped
     environment:
-      REDIS_PASSWORD_FILE: /run/secrets/redis_password
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
       - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
       - ./certs/redis:/tls:ro
-    secrets:
-      - redis_password
     networks:
       - db_network
     ports:
@@ -53,15 +48,15 @@ services:
     command:
       - "/bin/sh"
       - "-c"
-      - "redis-server /usr/local/etc/redis/redis.conf --requirepass \"$(cat /run/secrets/redis_password)\" --tls-port 6379 --port 0 --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt --tls-auth-clients no --maxmemory 2gb --maxmemory-policy allkeys-lru"
+      - "redis-server /usr/local/etc/redis/redis.conf --requirepass \"$$REDIS_PASSWORD\" --tls-port 6379 --port 0 --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt --tls-auth-clients no --maxmemory 2gb --maxmemory-policy allkeys-lru"
 
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant_db
     restart: unless-stopped
     environment:
-      QDRANT__SERVICE__API_KEY_FILE: /run/secrets/qdrant_api_key
-      QDRANT__SERVICE__READ_ONLY_API_KEY_FILE: /run/secrets/qdrant_readonly_key
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY}
+      QDRANT__SERVICE__READ_ONLY_API_KEY: ${QDRANT_READONLY_KEY}
     volumes:
       - qdrant_storage:/qdrant/storage
       - qdrant_snapshots:/qdrant/snapshots
@@ -69,9 +64,6 @@ services:
       - ./.config/qdrant-config.yaml:/qdrant/config/config.yaml:ro
     tmpfs:
       - /tmp
-    secrets:
-      - qdrant_api_key
-      - qdrant_readonly_key
     networks:
       - db_network
     ports:
@@ -114,13 +106,3 @@ volumes:
     driver: local
   qdrant_snapshots:
     driver: local
-
-secrets:
-  postgres_password:
-    file: ./secrets/postgres_password.txt
-  redis_password:
-    file: ./secrets/redis_password.txt
-  qdrant_api_key:
-    file: ./secrets/qdrant_api_key.txt
-  qdrant_readonly_key:
-    file: ./secrets/qdrant_readonly_key.txt
